@@ -39,10 +39,10 @@ export async function showGroupsView(
 
     // Bediening mag de navigatie naar de groep niet triggeren
     for (const el of [toggle.parentElement!, slider]) el.addEventListener("click", e => e.stopPropagation());
-    toggle.onchange = () => client.setGroup(group.id, { on: toggle.checked }).catch(showError);
+    // Bij aanzetten geldt de huidige sliderpositie; bij uitstaan wordt de slider genegeerd
+    toggle.onchange = () => client.setGroup(group.id, toggle.checked ? { on: true, bri: Number(slider.value) } : { on: false }).catch(showError);
     slider.oninput = () => {
-      toggle.checked = true;
-      client.setGroup(group.id, { on: true, bri: Number(slider.value) }).catch(showError);
+      if (toggle.checked) client.setGroup(group.id, { bri: Number(slider.value) }).catch(showError);
     };
     card.onclick = () => onSelect(group);
     list.appendChild(card);

@@ -28,20 +28,24 @@ export async function showGroupView(
       card.querySelector(".sub")!.textContent = light.state.reachable ? "" : "Niet bereikbaar";
       const toggle = card.querySelector<HTMLInputElement>("input")!;
       toggle.checked = light.state.on;
-      toggle.onchange = () => client.setLight(light.id, { on: toggle.checked }).catch(showError);
+      let slider: HTMLInputElement | undefined;
+      toggle.onchange = () => {
+        const state = toggle.checked && slider ? { on: true, bri: Number(slider.value) } : { on: toggle.checked };
+        client.setLight(light.id, state).catch(showError);
+      };
 
       if (light.state.bri !== undefined) {
-        const slider = document.createElement("input");
+        slider = document.createElement("input");
         slider.type = "range";
         slider.className = "slider";
         slider.min = "1";
         slider.max = "254";
         slider.value = String(light.state.bri);
-        slider.oninput = () => {
-          toggle.checked = true;
-          client.setLight(light.id, { on: true, bri: Number(slider.value) }).catch(showError);
+        const s = slider;
+        s.oninput = () => {
+          if (toggle.checked) client.setLight(light.id, { bri: Number(s.value) }).catch(showError);
         };
-        card.appendChild(slider);
+        card.appendChild(s);
       }
       list.appendChild(card);
     }
