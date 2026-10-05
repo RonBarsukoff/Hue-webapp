@@ -1,5 +1,5 @@
 import html from "../templates/group.html?raw";
-import { Group, HueClient } from "../hue";
+import { Group, HueClient, throttleLatest } from "../hue";
 
 export async function showGroupView(
   root: HTMLElement,
@@ -42,8 +42,9 @@ export async function showGroupView(
         slider.max = "254";
         slider.value = String(light.state.bri);
         const s = slider;
+        const sendBri = throttleLatest((bri: number) => client.setLight(light.id, { bri, transitiontime: 1 }), showError);
         s.oninput = () => {
-          if (toggle.checked) client.setLight(light.id, { bri: Number(s.value) }).catch(showError);
+          if (toggle.checked) sendBri(Number(s.value));
         };
         card.appendChild(s);
       }

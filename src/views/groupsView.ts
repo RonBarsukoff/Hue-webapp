@@ -1,5 +1,5 @@
 import html from "../templates/groups.html?raw";
-import { Group, HueClient } from "../hue";
+import { Group, HueClient, throttleLatest } from "../hue";
 
 export async function showGroupsView(
   root: HTMLElement,
@@ -41,8 +41,9 @@ export async function showGroupsView(
     for (const el of [toggle.parentElement!, slider]) el.addEventListener("click", e => e.stopPropagation());
     // Bij aanzetten geldt de huidige sliderpositie; bij uitstaan wordt de slider genegeerd
     toggle.onchange = () => client.setGroup(group.id, toggle.checked ? { on: true, bri: Number(slider.value) } : { on: false }).catch(showError);
+    const sendBri = throttleLatest((bri: number) => client.setGroup(group.id, { bri, transitiontime: 1 }), showError);
     slider.oninput = () => {
-      if (toggle.checked) client.setGroup(group.id, { bri: Number(slider.value) }).catch(showError);
+      if (toggle.checked) sendBri(Number(slider.value));
     };
     card.onclick = () => onSelect(group);
     list.appendChild(card);

@@ -82,11 +82,36 @@ export class HueClient {
     return ids.filter(id => data[id]).map(id => ({ id, name: data[id].name, state: data[id].state }));
   }
 
-  setGroup(id: string, action: { on?: boolean; bri?: number }): Promise<unknown> {
+  setGroup(id: string, action: { on?: boolean; bri?: number; transitiontime?: number }): Promise<unknown> {
+    console.log(`Setting group ${id} with action`, action);
     return request(this.s.ip, this.path(`/groups/${id}/action`), "PUT", action);
   }
 
-  setLight(id: string, state: { on?: boolean; bri?: number }): Promise<unknown> {
+  setLight(id: string, state: { on?: boolean; bri?: number; transitiontime?: number }): Promise<unknown> {
+    console.log(`Setting light ${id} with state`, state);
     return request(this.s.ip, this.path(`/lights/${id}/state`), "PUT", state);
   }
+}
+
+/**
+ * Stuurt hooguit één verzoek tegelijk en minimaal `intervalMs` na het vorige;
+ * tussenliggende waarden worden overgeslagen zodat de bridge niet vollopt.
+ */
+export function throttleLatest<T>(send: (value: T) => Promise<unknown>, onError: (e: unknown) => void, intervalMs = 250): (value: T) => void {
+  let pending: { value: T } | undefined;
+  let running = false;
+  const run = async () => {
+    running = true;
+    while (pending) {
+      const { value } = pending;
+      pending = undefined;
+      try { await send(value); } catch (e) { onError(e); }
+      await new Promise(r => setTimeout(r, intervalMs));
+    }
+    running = false;
+  };
+  return value => {
+    pending = { value };
+    if (!running) void run();
+  };
 }
