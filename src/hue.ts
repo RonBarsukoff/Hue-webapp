@@ -82,6 +82,23 @@ export class HueClient {
     return ids.filter(id => data[id]).map(id => ({ id, name: data[id].name, state: data[id].state }));
   }
 
+  async getAllLights(): Promise<Light[]> {
+    const data = await request<Record<string, { name: string; state: LightState }>>(this.s.ip, this.path("/lights"));
+    return Object.entries(data).map(([id, l]) => ({ id, name: l.name, state: l.state }));
+  }
+
+  createGroup(name: string, lights: string[]): Promise<unknown> {
+    return request(this.s.ip, this.path("/groups"), "POST", { name, lights, type: "LightGroup" });
+  }
+
+  updateGroup(id: string, name: string, lights: string[]): Promise<unknown> {
+    return request(this.s.ip, this.path(`/groups/${id}`), "PUT", { name, lights });
+  }
+
+  deleteGroup(id: string): Promise<unknown> {
+    return request(this.s.ip, this.path(`/groups/${id}`), "DELETE");
+  }
+
   setGroup(id: string, action: { on?: boolean; bri?: number; transitiontime?: number }): Promise<unknown> {
     console.log(`Setting group ${id} with action`, action);
     return request(this.s.ip, this.path(`/groups/${id}/action`), "PUT", action);

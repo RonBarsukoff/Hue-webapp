@@ -6,9 +6,11 @@ export async function showGroupsView(
   client: HueClient,
   onSelect: (group: Group) => void,
   onSettings: () => void,
+  onAdd: () => void,
 ): Promise<void> {
   root.innerHTML = html;
   root.querySelector<HTMLButtonElement>("#settings")!.onclick = onSettings;
+  root.querySelector<HTMLButtonElement>("#add")!.onclick = onAdd;
   const status = root.querySelector<HTMLElement>("#status")!;
   const list = root.querySelector<HTMLElement>("#groups")!;
   const showError = (e: unknown) => { status.textContent = (e as Error).message; status.className = "status error"; };
